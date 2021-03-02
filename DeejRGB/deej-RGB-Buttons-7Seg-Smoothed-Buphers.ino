@@ -1,30 +1,30 @@
-#include <CorsairLightingProtocol.h>
-#include <FastLED.h>
-#include <HID-Project.h>
-#include <HID-Settings.h>
-#include <TM1637.h>
+//#include <CorsairLightingProtocol.h>
+//#include <FastLED.h>
+//#include <HID-Project.h>
+//#include <HID-Settings.h>
+//#include <TM1637.h>
 
 //Display Config
 
-#define CLK 8 //Set CLK pin for TM1637
-#define DIO 9 //Set DIO pin for TM1637
-TM1637 tm1637(CLK,DIO);
+//#define CLK 8 //Set CLK pin for TM1637
+//#define DIO 9 //Set DIO pin for TM1637
+//TM1637 tm1637(CLK,DIO);
 
 //LED Config
 
-#define DATA_PIN_CHANNEL_1 15 //Signal pin for strip 1
+//#define DATA_PIN_CHANNEL_1 15 //Signal pin for strip 1
 //#define DATA_PIN_CHANNEL_2 3 //Signal pin for strip 2
 
-int LPC1 = 10; //Defines LEDS per channel
-int LPC2 = 10; //Defines LEDS per channel
+//int LPC1 = 10; //Defines LEDS per channel
+//int LPC2 = 10; //Defines LEDS per channel
 
-CRGB ledsChannel1[10]; //Defines max number of LEDS on channel 1
+//CRGB ledsChannel1[10]; //Defines max number of LEDS on channel 1
 //CRGB ledsChannel2[LPC2]; //Defines max number of LEDS on channel 2
 
-CorsairLightingFirmware firmware = corsairLightingNodePROFirmware();
-FastLEDController ledController(true);
-CorsairLightingProtocolController cLP(&ledController, &firmware);
-CorsairLightingProtocolHID cHID(&cLP);
+///CorsairLightingFirmware firmware = corsairLightingNodePROFirmware();
+//FastLEDController ledController(true);
+//CorsairLightingProtocolController cLP(&ledController, &firmware);
+//CorsairLightingProtocolHID cHID(&cLP);
 
 //Slider Config
 
@@ -45,14 +45,14 @@ int oldButtonState[NUM_BUTTONS]={0,0,0,0,0};
 unsigned int oldVolume[NUM_SLIDERS];
 unsigned int newVolume[NUM_SLIDERS];
 unsigned long changeTime[NUM_SLIDERS] = {0,0,0,0,0};
-const int displayOnTime = 3000; //Length of time, in ms, that the display should stay on after a volume change.
-const int displayLargeSensitivity = 50; //Minimum analog input change to activate the display
-const int displaySmallSensitivity = 15; //Minimum analog input change to keep the display on
+//const int displayOnTime = 3000; //Length of time, in ms, that the display should stay on after a volume change.
+//const int displayLargeSensitivity = 50; //Minimum analog input change to activate the display
+//const int displaySmallSensitivity = 15; //Minimum analog input change to keep the display on
 
 void setup() { 
-  FastLED.addLeds<WS2812B, DATA_PIN_CHANNEL_1, GRB>(ledsChannel1, LPC1); //Adds leds to controll
+  //FastLED.addLeds<WS2812B, DATA_PIN_CHANNEL_1, GRB>(ledsChannel1, LPC1); //Adds leds to controll
   //FastLED.addLeds<WS2812B, DATA_PIN_CHANNEL_2, GRB>(ledsChannel2, LPC2);
-  ledController.addLEDs(0, ledsChannel1, LPC1);
+ // ledController.addLEDs(0, ledsChannel1, LPC1);
   //ledController.addLEDs(1, ledsChannel2, LPC2);
   
   for (int i = 0; i < NUM_SLIDERS; i++) {
@@ -64,17 +64,17 @@ void setup() {
   }  
   
   Keyboard.begin();
-  Consumer.begin();
-  tm1637.init();//Initialize Display
-  tm1637.set(7);//Set brightness
+ // Consumer.begin();
+ // tm1637.init();//Initialize Display
+ // tm1637.set(7);//Set brightness
   Serial.begin(9600);
 }
 
 void loop() {
   updateSliderValues();
   sendSliderValues(); // Actually send data (all the time)
-  updateCLP(); //Updates Lighting
-  getDisplayValues(); //Updates Display
+  //updateCLP(); //Updates Lighting
+  //getDisplayValues(); //Updates Display
   buttonActions(); //Checks Buttons
   // printSliderValues(); // For debug
 }
@@ -115,19 +115,19 @@ void printSliderValues() {
 
 //CLP Functions
 
-void noDelay(int wait) { //Instead of delaying, we just loop upateCLP, until atleast the desiered time has past. Not super precise, but good enough.
-  long startTime = millis(); //Gets loop start time
-  while(millis()-startTime<wait){ //While not enough time has passed
-    updateCLP(); //Update lighting
-  }
-}
+//void noDelay(int wait) { //Instead of delaying, we just loop upateCLP, until atleast the desiered time has past. Not super precise, but good enough.
+  //long startTime = millis(); //Gets loop start time
+ // while(millis()-startTime<wait){ //While not enough time has passed
+   // updateCLP(); //Update lighting
+ // }
+//}
 
-void updateCLP(){ //Updates Ligthing
-    cHID.update();
-    if (ledController.updateLEDs()) {
-      FastLED.show();
-    }
-}
+//void updateCLP(){ //Updates Ligthing
+  //  cHID.update();
+  //  if (ledController.updateLEDs()) {
+   //   FastLED.show();
+   // }
+//}
 
 //Button Functions
 
@@ -176,52 +176,52 @@ void buttonActions(){ //updates button states and runs functions
 
 //Display Functions
 
-void getDisplayValues(){
-    for (int i = 0; i<NUM_SLIDERS; i++){
-      newVolume[i] = analogSliderValues[i]; //gets slider values
-      if(abs(newVolume[i]-oldVolume[i])>=displayLargeSensitivity){ //if change is significant
-        changeTime[i] = millis(); //reset change timer
-        changeTime[i] = changeTime[i] + displayOnTime; //add 3 seconds since last change
-      }  
-      if(changeTime[i]>millis() && abs(newVolume[i]-oldVolume[i])>=displaySmallSensitivity){ //updates display for smaller changes during 3 seconds window without resetting window
-        updateDisplay(i); //updates display
-      }
-      else if (changeTime[0]<millis() && changeTime[1]<millis() && changeTime[2]<millis() && changeTime[3]<millis() && changeTime[4]<millis()){ //if all windows are past
-        blankDisplay(); //blank display
-      }
-  }
-}
+//void getDisplayValues(){
+   // for (int i = 0; i<NUM_SLIDERS; i++){
+    //  newVolume[i] = analogSliderValues[i]; //gets slider values
+    //  if(abs(newVolume[i]-oldVolume[i])>=displayLargeSensitivity){ //if change is significant
+     //   changeTime[i] = millis(); //reset change timer
+    //    changeTime[i] = changeTime[i] + displayOnTime; //add 3 seconds since last change
+    //  }  
+   //   if(changeTime[i]>millis() && abs(newVolume[i]-oldVolume[i])>=displaySmallSensitivity){ //updates display for smaller changes during 3 seconds window without resetting window
+   //     updateDisplay(i); //updates display
+   //   }
+   //   else if (changeTime[0]<millis() && changeTime[1]<millis() && changeTime[2]<millis() && changeTime[3]<millis() && changeTime[4]<millis()){ //if all windows are past
+   //     blankDisplay(); //blank display
+    //  }
+ // }
+//}
 
-void updateDisplay(int i){  //update display
-  oldVolume[i] = newVolume[i]; //sets oldVolume to newVolume
-  int num[4];
-  num[3] = int(newVolume[i]/10.23)/1U % 10; //gets each digit of display
-  num[2] = int(newVolume[i]/10.23)/10U % 10;
-  num[1] = int(newVolume[i]/10.23)/100U % 10;
-  num[0] = (i+1); //sets first digit to slider #
-  for (int j = 3; j>=0; j--){
-    if(j==1 && num[1]==0){
-       tm1637.display(j,34); //leaves leading zero blank
-    }
-    else{
-      tm1637.display(j,num[j]); //sets display to most recent change
-    }
-  }    
-}
+//void updateDisplay(int i){  //update display
+//  oldVolume[i] = newVolume[i]; //sets oldVolume to newVolume
+ // int num[4];
+ // num[3] = int(newVolume[i]/10.23)/1U % 10; //gets each digit of display
+ // num[2] = int(newVolume[i]/10.23)/10U % 10;
+//  num[1] = int(newVolume[i]/10.23)/100U % 10;
+//  num[0] = (i+1); //sets first digit to slider #
+//  for (int j = 3; j>=0; j--){
+//    if(j==1 && num[1]==0){
+//       tm1637.display(j,34); //leaves leading zero blank
+//    }
+//    else{
+//      tm1637.display(j,num[j]); //sets display to most recent change
+//    }
+//  }    
+//}
 
-void blankDisplay(){
-  for (int j = 3; j>=0; j--){
-    if(Serial.availableForWrite()<32){ //makes sure serial bus is connected
-      tm1637.point(1);
-      tm1637.set(0);
-    }
-    else{
-      tm1637.point(0);
-      tm1637.set(7);
-    }
-    tm1637.display(j,34); //blanks display
-  }
-}
+//void blankDisplay(){
+//  for (int j = 3; j>=0; j--){
+ //   if(Serial.availableForWrite()<32){ //makes sure serial bus is connected
+  ///    tm1637.point(1);
+  //    tm1637.set(0);
+   // }
+   // else{
+   //   tm1637.point(0);
+   //   tm1637.set(7);
+   // }
+  //  tm1637.display(j,34); //blanks display
+//  }
+//}
 
 //Smoothing Functions
 
